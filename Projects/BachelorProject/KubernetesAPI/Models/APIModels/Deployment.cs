@@ -2,7 +2,7 @@
 {
     public class Deployments
     {
-        public Deployment[] items { get; set; }
+        public List<Deployment> items { get; set; }
     }
 
     public class Deployment
