@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:side_navigation/side_navigation.dart';
 
 void main() {
   runApp(const MyApp());
@@ -24,7 +25,72 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MainView(),
+      //home: const MyHomePage(title: 'Flutter Demo Home Page'),
+    );
+  }
+}
+
+class MainView extends StatefulWidget {
+  const MainView({Key? key}) : super(key: key);
+
+  @override
+  State<MainView> createState() => _MainViewState();
+}
+
+class _MainViewState extends State<MainView> {
+  List<Widget> views = const [
+    Center(
+      child: MyHomePage(title: 'Connector overview'),
+    ),
+    Center(
+      child: Text('Account'),
+    ),
+    Center(
+      child: Text('Settings'),
+    ),
+  ];
+  int selectedIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Row(
+        children: [
+          SideNavigationBar(
+            header: const SideNavigationBarHeader(
+              image: CircleAvatar(
+                child: Icon(Icons.account_balance),
+              ),
+              title: Text('Title widget'),
+              subtitle: Text('Subtitle widget')
+            ),
+            selectedIndex: selectedIndex,
+            items: const [
+              SideNavigationBarItem(
+                icon: Icons.dashboard,
+                label: 'Connectors',
+              ),
+              SideNavigationBarItem(
+                icon: Icons.person,
+                label: 'Account',
+              ),
+              SideNavigationBarItem(
+                icon: Icons.settings,
+                label: 'Settings',
+              ),
+            ],
+            onTap: (index) {
+              setState(() {
+                selectedIndex = index;
+              });
+            },
+          ),
+          Expanded(
+            child: views.elementAt(selectedIndex),
+          )
+        ],
+      ),
     );
   }
 }
@@ -74,6 +140,7 @@ class _MyHomePageState extends State<MyHomePage> {
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
+        backgroundColor: const Color.fromARGB(255, 4, 33, 66),
       ),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
