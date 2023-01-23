@@ -10,6 +10,9 @@ namespace KubernetesAPI.Models.DBModels
         [Required]
         public string Name { get; set; }
 
+        [Required]
+        public string Repository { get; set; }
+
         public DateTime? ReleaseDate { get; set; }
 
         public ConnectorType? ConnectorType { get; set; }

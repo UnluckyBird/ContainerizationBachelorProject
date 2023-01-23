@@ -1,6 +1,9 @@
+using KubernetesAPI.Data;
 using KubernetesAPI.Models;
+using KubernetesAPI.Models.DBModels;
 using KubernetesAPI.Settings;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System;
 using System.Diagnostics;
@@ -13,56 +16,16 @@ namespace KubernetesAPI.Controllers
     public class ConnectorController : ControllerBase
     {
         private readonly ILogger<ConnectorController> _logger;
+        private readonly ApplicationDbContext _db;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IOptionsMonitor<Appsettings> _appsettings;
 
-        public ConnectorController(ILogger<ConnectorController> logger, IHttpClientFactory httpClientFactory, IOptionsMonitor<Appsettings> appsettings)
+        public ConnectorController(ILogger<ConnectorController> logger, ApplicationDbContext db, IHttpClientFactory httpClientFactory, IOptionsMonitor<Appsettings> appsettings)
         {
             _logger = logger;
+            _db = db;
             _httpClientFactory = httpClientFactory;
             _appsettings = appsettings;
-        }
-
-        /*[HttpGet("GetTypes")]
-        public async Task<ActionResult<IEnumerable<string>>> GetTypes()
-        {
-            string? imagesFolder = _appsettings.CurrentValue.ImagesFolder;
-            if (imagesFolder == null)
-            {
-                return NotFound();
-            }
-
-            return Directory.GetDirectories(imagesFolder).Select(d => new DirectoryInfo(d).Name).ToList();
-        }*/
-
-        [HttpGet("GetImages")]
-        public async Task<ActionResult<IEnumerable<Image>>> GetImages()
-        {
-            Process p = new Process();
-            
-            p.StartInfo.UseShellExecute = false;
-            p.StartInfo.RedirectStandardOutput = true;
-            p.StartInfo.FileName = "cmd.exe";
-            p.StartInfo.Arguments = "/C docker images --all";
-            p.Start();
-
-            string output = p.StandardOutput.ReadToEnd();
-            p.WaitForExit();
-
-            List<Image> images = new List<Image>();
-            string[] lines = output.Split("\n");
-            for(int i = 1; i< lines.Length - 1; i++)
-            {
-                string[] image = lines[i].Split(" ", StringSplitOptions.RemoveEmptyEntries);
-                images.Add(new Image() {
-                    Repository = image[0],
-                    Tag = image[1],
-                    Id = image[2],
-                    Created = $"{image[3]} {image[4]} {image[5]}",
-                    Size = image[6]
-                });
-            }
-            return images;
         }
 
         [HttpGet]
@@ -122,6 +85,7 @@ namespace KubernetesAPI.Controllers
         }
 
         [HttpPut]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Put(string name, Connector connector)
         {
             HttpClient httpClient = _httpClientFactory.CreateClient("kubeClient");
@@ -133,6 +97,7 @@ namespace KubernetesAPI.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<ActionResult<Connector>> Post(Connector connector)
         {
             if (connector == null)
@@ -162,6 +127,27 @@ namespace KubernetesAPI.Controllers
             {
                 return BadRequest(ex.Message);
             }
+        }
+
+        [HttpGet("Types")]
+        public async Task<ActionResult<IEnumerable<ConnectorType>>> GetTypes()
+        {
+            List<ConnectorType> connectorTypes = await _db.ConnectorType.ToListAsync();
+
+            return connectorTypes;
+        }
+
+        [HttpGet("{name}/Images")]
+        public async Task<ActionResult<IEnumerable<Image>>> GetImages(string name)
+        {
+            ConnectorType? connectorType = await _db.ConnectorType.Include(ct => ct.Images).FirstOrDefaultAsync(ct => ct.Type.ToLower() == name);
+
+            if (connectorType == null)
+            {
+                return NotFound();
+            }
+
+            return connectorType.Images.ToList();
         }
     }
 }

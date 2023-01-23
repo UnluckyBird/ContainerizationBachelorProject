@@ -4,6 +4,7 @@ using KubernetesAPI.Settings;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +30,11 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+builder.Services.AddHttpClient("dockerHubClient", options =>
+{
+    options.BaseAddress = new Uri(builder.Configuration["Docker:APIURL"] ?? "");
+});
+
 builder.Services.AddHttpClient("kubeClient" ,options =>
 {
     options.BaseAddress = new Uri(builder.Configuration["App:KubernetesAPIURL"] ?? "");
@@ -36,6 +42,7 @@ builder.Services.AddHttpClient("kubeClient" ,options =>
 
 builder.Services.AddHostedService<UpdateImages>();
 builder.Services.Configure<Appsettings>(builder.Configuration.GetSection("App"));
+builder.Services.Configure<DockerOptions>(builder.Configuration.GetSection("Docker"));
 
 var app = builder.Build();
 
