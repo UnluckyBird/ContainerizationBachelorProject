@@ -1,0 +1,136 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-api-deployment
+  labels:
+    app: kube-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kube-api
+  template:
+    metadata:
+      labels:
+        app: kube-api
+    spec:
+      containers:
+      - name: kube-api
+        image: kube-api:latest
+        ports:
+        - containerPort: 8081
+        env:
+        - name: MSSQL_SA_PASSWORD
+          valueFrom: 
+            secretKeyRef:
+              name: mssql-secret
+              key: mssql-sa-password
+        - name: ConnectionStrings__DefaultConnection
+          valueFrom: 
+            secretKeyRef:
+              name: mssql-secret
+              key: mssql-connectionstring
+        - name: Docker__Username
+          valueFrom: 
+            configMapKeyRef:
+              name: kube-api-config
+              key: docker-username
+        - name: Docker__Namespace
+          valueFrom: 
+            configMapKeyRef:
+              name: kube-api-config
+              key: docker-namespace
+        - name: Docker__Repository
+          valueFrom: 
+            configMapKeyRef:
+              name: kube-api-config
+              key: docker-repository
+        - name: Docker__Password
+          valueFrom: 
+            secretKeyRef:
+              name: kube-api-secret
+              key: docker-password
+      imagePullSecrets:
+      - name: regcred
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-api-service
+spec:
+  selector:
+    app: kube-api
+  type: LoadBalancer  
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
+      nodePort: 30000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mssql-deployment
+  labels:
+    app: mssql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mssql
+  template:
+    metadata:
+      labels:
+        app: mssql
+    spec:
+      containers:
+      - name: mssql
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        ports:
+        - containerPort: 27017
+        env:
+        - name: MSSQL_SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mssql-secret
+              key: mssql-sa-password
+        - name: ACCEPT_EULA
+          value: Y
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mssql-service
+spec:
+  selector:
+    app: mssql
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kube-api-config
+data:
+  docker-username: "unluckybird"
+  docker-namespace: "unluckybird"
+  docker-repository: "unluckybird_private_repository"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+    name: kube-api-secret
+type: Opaque
+data:
+    docker-password: {{INSERT DOCKER PASSWORD HERE, DON'T COMMIT TO GIT}}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+    name: mssql-secret
+type: Opaque
+data:
+    mssql-sa-password: qwer1234
+    mssql-connectionstring: "Server=tcp:mssql-service;Initial Catalog=BachelorDB;Persist Security Info=False;User ID=sa;Password=<1234qwer>;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=true;Connection Timeout=30;"
