@@ -19,6 +19,7 @@ namespace KubernetesAPI.Controllers
         }
 
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<Image>>> Get()
         {
             List<Image> images = await _db.Image.ToListAsync();

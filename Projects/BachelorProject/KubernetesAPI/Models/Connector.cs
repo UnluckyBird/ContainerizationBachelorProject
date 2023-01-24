@@ -2,7 +2,9 @@ namespace KubernetesAPI.Models
 {
     public class Connector
     {
-        public string? Name { get; set; }
+        public string? DeploymentName { get; set; }
+
+        public string? Label { get; set; }
 
         public string? Type { get; set; }
 
@@ -10,6 +12,6 @@ namespace KubernetesAPI.Models
 
         public int? Replicas { get; set; }
 
-        public int? AvaiableReplicas { get; set; }
+        public int? AvailableReplicas { get; set; }
     }
 }

@@ -8,7 +8,6 @@ using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"), s =>
@@ -32,16 +31,16 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddHttpClient("dockerHubClient", options =>
 {
-    options.BaseAddress = new Uri(builder.Configuration["Docker:APIURL"] ?? "");
+    options.BaseAddress = new Uri(builder.Configuration["Docker:APIURL"] ?? throw new ArgumentNullException("Docker:APIURL"));
 });
 
 builder.Services.AddHttpClient("kubeClient" ,options =>
 {
-    options.BaseAddress = new Uri(builder.Configuration["App:KubernetesAPIURL"] ?? "");
+    options.BaseAddress = new Uri(builder.Configuration["Kubernetes:APIURL"] ?? throw new ArgumentNullException("Kubernetes:APIURL"));
 });
 
 builder.Services.AddHostedService<UpdateImages>();
-builder.Services.Configure<Appsettings>(builder.Configuration.GetSection("App"));
+builder.Services.Configure<KubernetesOptions>(builder.Configuration.GetSection("Kubernetes"));
 builder.Services.Configure<DockerOptions>(builder.Configuration.GetSection("Docker"));
 
 var app = builder.Build();
