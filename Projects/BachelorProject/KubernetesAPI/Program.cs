@@ -8,6 +8,7 @@ using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"), s =>
@@ -34,16 +35,34 @@ builder.Services.AddHttpClient("dockerHubClient", options =>
     options.BaseAddress = new Uri(builder.Configuration["Docker:APIURL"] ?? throw new ArgumentNullException("Docker:APIURL"));
 });
 
-builder.Services.AddHttpClient("kubeClient" ,options =>
+var host = Environment.GetEnvironmentVariable("KUBERNETES_SERVICE_HOST");
+var port = Environment.GetEnvironmentVariable("KUBERNETES_SERVICE_PORT_HTTPS");
+
+if (host != null && port != null)
 {
-    options.BaseAddress = new Uri(builder.Configuration["Kubernetes:APIURL"] ?? throw new ArgumentNullException("Kubernetes:APIURL"));
-});
+    builder.Services.AddHttpClient("kubeClient", options =>
+    {
+        options.BaseAddress = new Uri($"https://{host}:{port}/apis/apps/v1/namespaces/default/");
+    });
+}
+else
+{
+    builder.Services.AddHttpClient("kubeClient", options =>
+    {
+        options.BaseAddress = new Uri(builder.Configuration["Kubernetes:APIURL"] ?? throw new ArgumentNullException("Kubernetes:APIURL"));
+    });
+}
+
 
 builder.Services.AddHostedService<UpdateImages>();
 builder.Services.Configure<KubernetesOptions>(builder.Configuration.GetSection("Kubernetes"));
 builder.Services.Configure<DockerOptions>(builder.Configuration.GetSection("Docker"));
 
+builder.Services.AddHealthChecks();
+
 var app = builder.Build();
+
+app.MapHealthChecks("/health");
 
 if (app.Environment.IsDevelopment())
 {
