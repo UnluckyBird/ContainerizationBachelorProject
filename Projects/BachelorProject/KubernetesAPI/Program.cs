@@ -9,9 +9,22 @@ using System.Reflection;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddEnvironmentVariables();
+
+var saPassword = Environment.GetEnvironmentVariable("MSSQL_SA_PASSWORD");
+string? connString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (saPassword != null)
+{
+    string[] values = connString.Split(";");
+    string[] server = values[0].Split(":");
+    values[0] = server[0] + ":mssql-service";
+    string[] pass = values[3].Split("=");
+    values[3] = pass[0] + $"={saPassword}";
+    connString = string.Join(";", values);
+}
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"), s =>
+        connString, s =>
         {
             s.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
         }
@@ -42,7 +55,14 @@ if (host != null && port != null)
 {
     builder.Services.AddHttpClient("kubeClient", options =>
     {
-        options.BaseAddress = new Uri($"https://{host}:{port}/apis/apps/v1/namespaces/default/");
+        if(port == "443")
+        {
+            options.BaseAddress = new Uri($"https://{host}:{port}/apis/apps/v1/namespaces/default/");
+        }
+        else
+        {
+            options.BaseAddress = new Uri($"http://{host}:{port}/apis/apps/v1/namespaces/default/");
+        }
     });
 }
 else
@@ -64,11 +84,8 @@ var app = builder.Build();
 
 app.MapHealthChecks("/health");
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 

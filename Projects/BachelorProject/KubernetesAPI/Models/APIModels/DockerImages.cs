@@ -26,7 +26,7 @@ namespace KubernetesAPI.Models.APIModels
         public DateTime LastPushed { get; set; }
 
         [JsonPropertyName("last_pulled")]
-        public DateTime LastPulled { get; set; }
+        public DateTime? LastPulled { get; set; }
 
         public string Status { get; set; }
     }

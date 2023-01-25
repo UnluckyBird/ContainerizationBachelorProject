@@ -37,6 +37,7 @@ namespace KubernetesAPI.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<IEnumerable<Connector>>> Get()
         {
+            _logger.LogInformation($"Getting Kubernetes deployments from: {_kubernetesOptionsMonitor.CurrentValue.APIURL}");
             HttpClient httpClient = _httpClientFactory.CreateClient("kubeClient");
             try
             {
@@ -68,6 +69,7 @@ namespace KubernetesAPI.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<Connector>> Get(string name)
         {
+            _logger.LogInformation($"Getting Kubernetes deployments from: {_kubernetesOptionsMonitor.CurrentValue.APIURL}");
             HttpClient httpClient = _httpClientFactory.CreateClient("kubeClient");
             try
             {
@@ -182,6 +184,7 @@ namespace KubernetesAPI.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<ConnectorType>>> GetTypes()
         {
+            _logger.LogInformation("Getting connector types");
             List<ConnectorType> connectorTypes = await _db.ConnectorType.ToListAsync();
 
             return connectorTypes;
@@ -192,6 +195,7 @@ namespace KubernetesAPI.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<IEnumerable<Image>>> GetImages(string name)
         {
+            _logger.LogInformation("Getting connector images");
             ConnectorType? connectorType = await _db.ConnectorType.Include(ct => ct.Images).FirstOrDefaultAsync(ct => ct.Type.ToLower() == name);
 
             if (connectorType == null)
