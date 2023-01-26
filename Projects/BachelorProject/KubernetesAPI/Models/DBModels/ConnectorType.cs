@@ -11,7 +11,9 @@ namespace KubernetesAPI.Models.DBModels
         public string Type { get; set; }
 
         [Required]
-        public int MaxReplicas { get; set; }
+        public string Repository { get; set; }
+
+        public int? MaxReplicas { get; set; }
 
         public IList<Image> Images { get; set; }
     }

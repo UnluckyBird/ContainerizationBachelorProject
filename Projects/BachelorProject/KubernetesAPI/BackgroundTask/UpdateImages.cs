@@ -1,6 +1,8 @@
 ﻿using KubernetesAPI.Data;
 using KubernetesAPI.Models.APIModels;
+using KubernetesAPI.Models.DBModels;
 using KubernetesAPI.Settings;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using static System.Net.WebRequestMethods;
@@ -45,12 +47,54 @@ namespace KubernetesAPI.BackgroundTask
 
                 try
                 {
-                    DockerImages? response = await httpClient.GetFromJsonAsync<DockerImages>($"namespaces/{_dockerOptions.Namespace}/repositories/{_dockerOptions.Repository}/images");
-                    //TODO Get docker pro and add data to db
+                    DockerImages? response = await httpClient.GetFromJsonAsync<DockerImages>($"namespaces/{_dockerOptions.Namespace}/repositories/{_dockerOptions.Repository}/images?status=active&currently_tagged=true&page_size=50");
+                    
+                    if (response != null)
+                    {
+                        response.Results.ForEach(r => { r.Tags = r.Tags.Where(r => r.IsCurrent).ToList(); });
+                        List<ConnectorType> connectorTypes = await _db.ConnectorType.Include(ct => ct.Images).ToListAsync();
+                        foreach (Result result in response.Results)
+                        {
+                            string imageType = result.Tags.First().TagName;
+                            imageType = imageType.Substring(0, imageType.LastIndexOf("-"));
+                            ConnectorType? connectorType = connectorTypes.FirstOrDefault(ct => ct.Type == imageType);
+                            if (connectorType == null)
+                            {
+                                connectorType = new ConnectorType() 
+                                { 
+                                    Type = imageType,
+                                    Repository = $"{result.NameSpace}/{result.Repository}",
+                                    Images = new List<Image>()
+                                };
+                                connectorTypes.Add(connectorType);
+                            }
+
+                            foreach(Tag tag in result.Tags)
+                            {
+                                Image? image = connectorType.Images.FirstOrDefault(i => i.Tag == tag.TagName);
+                                if(image != null)
+                                {
+                                    image.Digest = result.Digest;
+                                    image.LastPushed = result.LastPushed;
+                                }
+                                else
+                                {
+                                    connectorType.Images.Add(new Image()
+                                    {
+                                        Tag = tag.TagName,
+                                        Digest = result.Digest,
+                                        LastPushed = result.LastPushed
+                                    });
+                                }
+                            }
+                        }
+                        _db.ConnectorType.UpdateRange(connectorTypes);
+                        await _db.SaveChangesAsync();
+                    }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError($"Error in hosted service: {ex.Message}");
+                    _logger.LogError(ex.ToString());
                     await RefreshBearerToken();
                 }
             }

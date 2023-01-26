@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,7 +56,7 @@ if (host != null && port != null)
 {
     builder.Services.AddHttpClient("kubeClient", options =>
     {
-        if(port == "443")
+        if (port == "443")
         {
             options.BaseAddress = new Uri($"https://{host}:{port}/apis/apps/v1/namespaces/default/");
         }
@@ -63,6 +64,11 @@ if (host != null && port != null)
         {
             options.BaseAddress = new Uri($"http://{host}:{port}/apis/apps/v1/namespaces/default/");
         }
+    }).ConfigurePrimaryHttpMessageHandler(mh =>
+    {
+        var handler = new HttpClientHandler();
+        handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
+        return handler;
     });
 }
 else

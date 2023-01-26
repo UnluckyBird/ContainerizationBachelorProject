@@ -1,5 +1,6 @@
 ﻿using KubernetesAPI.Data;
 using KubernetesAPI.Models.DBModels;
+using KubernetesAPI.Models.DTO.Get;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,9 +21,15 @@ namespace KubernetesAPI.Controllers
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<Image>>> Get()
+        public async Task<ActionResult<IEnumerable<ImageDTO>>> Get()
         {
-            List<Image> images = await _db.Image.ToListAsync();
+            List<ImageDTO> images = await _db.Image.Include(i => i.ConnectorType).Select(i => new ImageDTO()
+            {
+                ConnectorType = i.ConnectorType.Type,
+                Tag= i.Tag,
+                Digest = i.Digest,
+                LastPushed = i.LastPushed
+            }).ToListAsync();
 
             return images;
         }

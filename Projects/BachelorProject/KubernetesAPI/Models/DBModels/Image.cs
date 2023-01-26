@@ -8,12 +8,12 @@ namespace KubernetesAPI.Models.DBModels
         public int Id { get; set; }
 
         [Required]
-        public string Name { get; set; }
+        public string Tag { get; set; }
 
         [Required]
-        public string Repository { get; set; }
+        public string Digest { get; set; }
 
-        public DateTime? ReleaseDate { get; set; }
+        public DateTime? LastPushed { get; set; }
 
         public ConnectorType? ConnectorType { get; set; }
     }
