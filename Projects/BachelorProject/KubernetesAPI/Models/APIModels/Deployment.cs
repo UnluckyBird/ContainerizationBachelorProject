@@ -124,6 +124,30 @@
         public Volumemount[] volumeMounts { get; set; }
         public Livenessprobe livenessProbe { get; set; }
         public Readinessprobe readinessProbe { get; set; }
+        public List<EnvVar> env { get; set; }
+    }
+
+    public class EnvVar
+    {
+        public string name { get; set; }
+        public string value { get; set; }
+        public EnvVarSource valueFrom { get; set; }
+    }
+
+    public class EnvVarSource
+    {
+        public ConfigMapKeySelector? configMapKeyRef { get; set; }
+        public SecretKeySelector? secretKeyRef { get; set; }
+    }
+
+    public class ConfigMapKeySelector
+    {
+        public string? name { get; set; }
+    }
+
+    public class SecretKeySelector
+    {
+        public string? key { get; set; }
     }
 
     public class Resources

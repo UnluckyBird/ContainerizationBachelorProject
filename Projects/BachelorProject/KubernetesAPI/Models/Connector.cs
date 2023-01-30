@@ -4,7 +4,7 @@ namespace KubernetesAPI.Models
     {
         public string? DeploymentName { get; set; }
 
-        public string? Label { get; set; }
+        public DateTime? DeploymentTime { get; set; }
 
         public string? Type { get; set; }
 
@@ -13,5 +13,14 @@ namespace KubernetesAPI.Models
         public int? Replicas { get; set; }
 
         public int? AvailableReplicas { get; set; }
+
+        public List<EnvironmentVariable> Env { get; set; } = new List<EnvironmentVariable>();
+    }
+
+    public class EnvironmentVariable
+    {
+        public string? Name { get; set;}
+
+        public string? Value { get; set;}
     }
 }

@@ -8,6 +8,9 @@ using Microsoft.Extensions.Options;
 using System.Text;
 using System.Net.Http.Headers;
 using KubernetesAPI.Models.DTO.Get;
+using KubernetesAPI.Models.DTO.Post;
+using KubernetesAPI.Models.DTO.Patch;
+using System.Text.Json;
 
 namespace KubernetesAPI.Controllers
 {
@@ -19,13 +22,16 @@ namespace KubernetesAPI.Controllers
         private readonly ApplicationDbContext _db;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IOptionsMonitor<KubernetesOptions> _kubernetesOptionsMonitor;
+        private readonly IOptionsMonitor<DockerOptions> _dockerOptionsMonitor;
 
-        public ConnectorController(ILogger<ConnectorController> logger, ApplicationDbContext db, IHttpClientFactory httpClientFactory, IOptionsMonitor<KubernetesOptions> kubernetesOptionsMonitor)
+
+        public ConnectorController(ILogger<ConnectorController> logger, ApplicationDbContext db, IHttpClientFactory httpClientFactory, IOptionsMonitor<KubernetesOptions> kubernetesOptionsMonitor, IOptionsMonitor<DockerOptions> dockerOptionsMonitor)
         {
             _logger = logger;
             _db = db;
             _httpClientFactory = httpClientFactory;
             _kubernetesOptionsMonitor = kubernetesOptionsMonitor;
+            _dockerOptionsMonitor = dockerOptionsMonitor;
         }
 
         [HttpGet]
@@ -34,11 +40,30 @@ namespace KubernetesAPI.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<IEnumerable<Connector>>> Get()
         {
+            /*return new List<Connector>{
+                new Connector
+                {
+                    DeploymentName = "first",
+                    DeploymentTime= DateTime.UtcNow,
+                    Type = "kube",
+                    Image = "one",
+                    Replicas = 1,
+                    AvailableReplicas= 1,
+                },
+                new Connector
+                {
+                    DeploymentName = "second",
+                    DeploymentTime = null,
+                    Type = "kube",
+                    Image = "two",
+                    Replicas = 2,
+                    AvailableReplicas = 1,
+                }
+            };*/
             HttpClient httpClient = _httpClientFactory.CreateClient("kubeClient");
             if (System.IO.File.Exists("/var/run/secrets/kubernetes.io/serviceaccount/token"))
             {
                 string token = System.IO.File.ReadAllText("/var/run/secrets/kubernetes.io/serviceaccount/token");
-                _logger.LogInformation($"Getting Kubernetes token: {token}");
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             }
 
@@ -54,10 +79,16 @@ namespace KubernetesAPI.Controllers
                 return apiModel.items.Where(d => d.metadata?.nameSpace == "default").Select(d => new Connector
                 {
                     DeploymentName = d.metadata?.name ?? "Unknown",
-                    Type = d.spec?.template?.spec?.containers.FirstOrDefault()?.name ?? "Unknown",
+                    DeploymentTime = d.metadata?.creationTimestamp ?? DateTime.MinValue,
+                    Type = d.spec?.template?.spec?.containers.FirstOrDefault()?.image?.Substring(0, d.spec.template.spec.containers.First().image.LastIndexOf('-')) ?? "Unknown",
                     Image = d.spec?.template?.spec?.containers.FirstOrDefault()?.image ?? "Unknown",
                     Replicas = d.status?.replicas ?? 0,
                     AvailableReplicas = d.status?.availableReplicas ?? 0,
+                    Env = d.spec?.template?.spec?.containers.FirstOrDefault()?.env?.Select(e => new EnvironmentVariable
+                    {
+                        Name = e.name,
+                        Value = e.valueFrom == null ? e.value : e.valueFrom.secretKeyRef != null ? "****" : e.valueFrom.configMapKeyRef?.name != null ? $"in configmap {e.valueFrom.configMapKeyRef.name}" : "Unknown"
+                    }).ToList() ?? new List<EnvironmentVariable>()
                 }).ToArray();
             }
             catch(Exception ex)
@@ -67,23 +98,22 @@ namespace KubernetesAPI.Controllers
             }         
         }
 
-        [HttpGet("{name}")]
+        [HttpGet("{deploymentName}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Connector))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<Connector>> Get(string name)
+        public async Task<ActionResult<Connector>> Get(string deploymentName)
         {
             HttpClient httpClient = _httpClientFactory.CreateClient("kubeClient");
             if (System.IO.File.Exists("/var/run/secrets/kubernetes.io/serviceaccount/token"))
             {
                 string token = System.IO.File.ReadAllText("/var/run/secrets/kubernetes.io/serviceaccount/token");
-                _logger.LogInformation($"Getting Kubernetes token: {token}");
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             }
 
             try
             {
-                Models.APIModels.Deployment? apiModel = await httpClient.GetFromJsonAsync<Models.APIModels.Deployment>($"deployments/{name}");
+                Models.APIModels.Deployment? apiModel = await httpClient.GetFromJsonAsync<Models.APIModels.Deployment>($"deployments/{deploymentName}");
 
                 if (apiModel == null)
                 {
@@ -93,10 +123,16 @@ namespace KubernetesAPI.Controllers
                 return new Connector
                 {
                     DeploymentName = apiModel.metadata?.name ?? "Unknown",
-                    Type = apiModel.spec?.template?.spec?.containers.FirstOrDefault()?.name ?? "Unknown",
+                    DeploymentTime = apiModel.metadata?.creationTimestamp ?? DateTime.MinValue,
+                    Type = apiModel.spec?.template?.spec?.containers.FirstOrDefault()?.image?.Substring(0, apiModel.spec.template.spec.containers.First().image.LastIndexOf('-')) ?? "Unknown",
                     Image = apiModel.spec?.template?.spec?.containers.FirstOrDefault()?.image ?? "Unknown",
                     Replicas = apiModel.status?.replicas ?? 0,
                     AvailableReplicas = apiModel.status?.availableReplicas ?? 0,
+                    Env = apiModel.spec?.template?.spec?.containers.FirstOrDefault()?.env?.Select(e => new EnvironmentVariable
+                    {
+                        Name = e.name,
+                        Value = e.valueFrom == null ? e.value : e.valueFrom.secretKeyRef != null ? "****" : e.valueFrom.configMapKeyRef?.name != null ? $"in configmap {e.valueFrom.configMapKeyRef.name}" : "Unknown"
+                    }).ToList() ?? new List<EnvironmentVariable>()
                 };
             }
             catch (Exception ex)
@@ -106,23 +142,50 @@ namespace KubernetesAPI.Controllers
             }
         }
 
-        [HttpPut]
+        [HttpPatch]
         [ProducesResponseType(StatusCodes.Status204NoContent, Type = typeof(Connector))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> Put(string name, Connector connector)
+        public async Task<IActionResult> Patch(string deploymentName, ConnectorPatchDTO connector)
         {
-            if (name != connector.DeploymentName)
+            if (deploymentName != connector.DeploymentName)
             {
-                return BadRequest("name does not equal DeploymentName");
+                return BadRequest("You can not change the deployment name");
             }
 
             HttpClient httpClient = _httpClientFactory.CreateClient("kubeClient");
             if (System.IO.File.Exists("/var/run/secrets/kubernetes.io/serviceaccount/token"))
             {
                 string token = System.IO.File.ReadAllText("/var/run/secrets/kubernetes.io/serviceaccount/token");
-                _logger.LogInformation($"Getting Kubernetes token: {token}");
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             }
+
+            DockerOptions dockerOptions = _dockerOptionsMonitor.CurrentValue;
+
+            var json = """
+                {
+                    "spec": {
+                        "replicas":"replicasAmount",
+                        "template": {
+                            "spec": {
+                                "containers": [
+                                {
+                                    "name": "namePlaceholder",
+                                    "image": "imagePlaceholder"
+                                }
+                                ]
+                            }
+                        }
+                    }
+                }
+            """.Replace("\"replicasAmount\"", connector.Replicas.ToString())
+            .Replace("namePlaceholder", connector.DeploymentName)
+            .Replace("imagePlaceholder", $"{dockerOptions.Namespace}/{dockerOptions.Repository}:{connector.Image}");
+
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Patch, $"deployments/{deploymentName}");
+            request.Content = new StringContent(json, Encoding.UTF8, "application/strategic-merge-patch+json");
+
+            var response = await httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
 
             return NoContent();
         }
@@ -130,11 +193,33 @@ namespace KubernetesAPI.Controllers
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Connector))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<Connector>> Post(Connector connector)
+        public async Task<ActionResult<Connector>> Post(ConnectorPostDTO connector)
         {
             if (connector?.Type == null)
             {
-                return BadRequest("Type can not be null");
+                ModelState.AddModelError(nameof(connector.Type), "Type can not be null");
+            }
+
+            if (connector.Type != connector.Image.Substring(0, connector.Image.LastIndexOf('-')))
+            {
+                ModelState.AddModelError(nameof(connector.Image), $"Image is not type {connector.Type}");
+            }
+
+            if (connector.CreateService == true)
+            {
+                if (connector.ExternalPortNumber == null)
+                {
+                    ModelState.AddModelError(nameof(connector.ExternalPortNumber), $"PortNumber cannot be null, when creating service");
+                }
+                else if (connector.ExternalPortNumber < 30000)
+                {
+                    ModelState.AddModelError(nameof(connector.ExternalPortNumber), $"PortNumber must be atleast 30000");
+                }
+            }
+
+            if (ModelState.IsValid == false)
+            {
+                return BadRequest(ModelState);
             }
 
             ConnectorType? connectorType = await _db.ConnectorType.Include(ct => ct.Images).FirstOrDefaultAsync(ct => ct.Type.ToLower() == connector.Type.ToLower());
@@ -161,26 +246,38 @@ namespace KubernetesAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            string file = await System.IO.File.ReadAllTextAsync("KubernetesTemplates/Template.yaml");
-
-            file = file.Replace("{{name}}", connector.DeploymentName).Replace("{{app}}", connector.Label).Replace("{{image}}", connector.Image).Replace("{{amount}}", connector.Replicas.ToString()).Replace("{{service-name}}", connector.Label + "-service").Replace("{{port}}", "9192");
-
             HttpClient httpClient = _httpClientFactory.CreateClient("kubeClient");
             if (System.IO.File.Exists("/var/run/secrets/kubernetes.io/serviceaccount/token"))
             {
                 string token = System.IO.File.ReadAllText("/var/run/secrets/kubernetes.io/serviceaccount/token");
-                _logger.LogInformation($"Getting Kubernetes token: {token}");
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             }
 
             try
             {
+                DockerOptions dockerOptions = _dockerOptionsMonitor.CurrentValue;
+
+                string deployFile = await System.IO.File.ReadAllTextAsync("KubernetesTemplates/DeploymentTemplate.yaml");
+                deployFile = deployFile.Replace("{{name}}", connector.DeploymentName).Replace("{{app}}", connector.DeploymentName).Replace("{{image}}", $"{dockerOptions.Namespace}/{dockerOptions.Repository}:{connector.Image}").Replace("{{amount}}", connector.Replicas.ToString()).Replace("{{port}}", connectorType.ExposedPort.ToString());
+
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "deployments");
-                request.Content = new StringContent(file, Encoding.UTF8, "application/yaml");
+                request.Content = new StringContent(deployFile, Encoding.UTF8, "application/yaml");
 
                 var response = await httpClient.SendAsync(request);
                 response.EnsureSuccessStatusCode();
-                return CreatedAtAction(nameof(Get), new { name = connector.DeploymentName }, connector);
+                if(connector.CreateService == true)
+                {
+                    string serviceFile = await System.IO.File.ReadAllTextAsync("KubernetesTemplates/ServiceTemplate.yaml");
+                    serviceFile = serviceFile.Replace("{{app}}", connector.Image).Replace("{{service-name}}", connector.DeploymentName + "-service").Replace("{{port}}", connectorType.ExposedPort.ToString()).Replace("{{external-port}}", connector.ExternalPortNumber.ToString());
+
+                    HttpRequestMessage serviceRequest = new HttpRequestMessage(HttpMethod.Post, "services");
+                    serviceRequest.Content = new StringContent(serviceFile, Encoding.UTF8, "application/yaml");
+
+                    var serviceResponse = await httpClient.SendAsync(serviceRequest);
+                    serviceResponse.EnsureSuccessStatusCode();
+                }
+
+                return CreatedAtAction(nameof(Get), new { name = connector.Type }, connector);
             }
             catch(Exception ex)
             {
@@ -193,19 +290,18 @@ namespace KubernetesAPI.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Delete(string name)
+        public async Task<IActionResult> Delete(string deploymentName)
         {
             HttpClient httpClient = _httpClientFactory.CreateClient("kubeClient");
             if (System.IO.File.Exists("/var/run/secrets/kubernetes.io/serviceaccount/token"))
             {
                 string token = System.IO.File.ReadAllText("/var/run/secrets/kubernetes.io/serviceaccount/token");
-                _logger.LogInformation($"Getting Kubernetes token: {token}");
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             }
 
             try
             {
-                var response = await httpClient.DeleteAsync($"deployments/{name}");
+                var response = await httpClient.DeleteAsync($"deployments/{deploymentName}");
 
                 if (response.IsSuccessStatusCode == false)
                 {
@@ -237,13 +333,13 @@ namespace KubernetesAPI.Controllers
             return connectorTypes;
         }
 
-        [HttpGet("{name}/Images")]
+        [HttpGet("{deploymentName}/Images")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<IEnumerable<ImageDTO>>> GetImages(string name)
+        public async Task<ActionResult<IEnumerable<ImageDTO>>> GetImages(string deploymentName)
         {
             _logger.LogInformation("Getting connector images");
-            ConnectorType? connectorType = await _db.ConnectorType.Include(ct => ct.Images).FirstOrDefaultAsync(ct => ct.Type.ToLower() == name.ToLower());
+            ConnectorType? connectorType = await _db.ConnectorType.Include(ct => ct.Images).FirstOrDefaultAsync(ct => ct.Type.ToLower() == deploymentName.ToLower());
 
             if (connectorType == null)
             {
@@ -252,11 +348,46 @@ namespace KubernetesAPI.Controllers
 
             return connectorType.Images.Select(i => new ImageDTO()
             {
-                ConnectorType = i.ConnectorType.Type,
+                ConnectorType = i.ConnectorType.Type ?? "Unknown",
                 Tag = i.Tag,
                 Digest = i.Digest,
                 LastPushed = i.LastPushed
             }).ToList();
+        }
+
+        [HttpGet("{deploymentName}/Pods")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<IEnumerable<PodDTO>>> GetPods(string deploymentName)
+        {
+            _logger.LogInformation("Getting connector pods");
+
+            HttpClient httpClient = _httpClientFactory.CreateClient("kubePodsClient");
+            if (System.IO.File.Exists("/var/run/secrets/kubernetes.io/serviceaccount/token"))
+            {
+                string token = System.IO.File.ReadAllText("/var/run/secrets/kubernetes.io/serviceaccount/token");
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+
+            try
+            {
+                Models.APIModels.Pods? apiModel = await httpClient.GetFromJsonAsync<Models.APIModels.Pods>($"pods?labelSelector=app%3D{deploymentName}");
+
+                if (apiModel == null)
+                {
+                    return NotFound();
+                }
+
+                return apiModel.items.Select(d => new PodDTO
+                {
+                    Name = d.metadata?.name ?? "Unknown",
+                }).ToArray();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

@@ -8,10 +8,10 @@ namespace KubernetesAPI.Models.DBModels
         public int Id { get; set; }
 
         [Required]
-        public string Tag { get; set; }
+        public string Tag { get; set; } = string.Empty;
 
         [Required]
-        public string Digest { get; set; }
+        public string Digest { get; set; } = string.Empty;
 
         public DateTime? LastPushed { get; set; }
 

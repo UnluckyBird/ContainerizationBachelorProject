@@ -24,12 +24,14 @@
 
   <ItemGroup>
     <Folder Include="Models\DTO\Post\" />
-    <Folder Include="KubernetesTemplates\" />
     <Folder Include="Services\" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="KubernetesTemplates\Template.yaml">
+    <None Update="KubernetesTemplates\DeploymentTemplate.yaml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="KubernetesTemplates\ServiceTemplate.yaml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

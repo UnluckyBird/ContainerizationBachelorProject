@@ -70,12 +70,34 @@ if (host != null && port != null)
         handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
         return handler;
     });
+
+    builder.Services.AddHttpClient("kubePodsClient", options =>
+    {
+        if (port == "443")
+        {
+            options.BaseAddress = new Uri($"https://{host}:{port}/api/v1/namespaces/default/");
+        }
+        else
+        {
+            options.BaseAddress = new Uri($"http://{host}:{port}/api/v1/namespaces/default/");
+        }
+    }).ConfigurePrimaryHttpMessageHandler(mh =>
+    {
+        var handler = new HttpClientHandler();
+        handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
+        return handler;
+    });
 }
 else
 {
     builder.Services.AddHttpClient("kubeClient", options =>
     {
         options.BaseAddress = new Uri(builder.Configuration["Kubernetes:APIURL"] ?? throw new ArgumentNullException("Kubernetes:APIURL"));
+    });
+
+    builder.Services.AddHttpClient("kubePodsClient", options =>
+    {
+        options.BaseAddress = new Uri(builder.Configuration["Kubernetes:PodsAPIURL"] ?? throw new ArgumentNullException("Kubernetes:APIURL"));
     });
 }
 
