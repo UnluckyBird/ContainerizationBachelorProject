@@ -1,11 +1,11 @@
-"# ContainerizationBachelorProject" 
-#So kubernetes can access your private repositories
-kubectl create secret docker-registry regcred --docker-server=https://index.docker.io/v1/ --docker-username=unluckybird --docker-password={{docker password}} --docker-email=martin.justinussen@gmail.com
+# Containerization Bachelor Project
 
-minikube start --driver=docker
-kubectl proxy --port=8080
-kubectl create deployment mongo-depl --image=mongo
-kubectl get pod
+## How to get up and running
+In order to run the the software tou will need to have downloaded and gotten minikube up and running.
+Then using the command line use the following command, replace the necessary information
+    kubectl create secret docker-registry regcred --docker-server=https://index.docker.io/v1/ --docker-username={{docker username}} --docker-password={{docker password}} --docker-email={{docker email}}
 
-docker build --rm -t unluckybird/bachelor-project:kube-api-1.0 -t unluckybird/bachelor-project:kube-api-latest .
-docker run --rm -p 5000:5000 -p 5001:5001 -e ASPNETCORE_HTTP_PORT=https://+:5001 -e ASPNETCORE_URLS=http://+:5000 unluckybird/bachelor-project:kube-api-latest -e "Docker:Username=unluckybird" -e "Docker:Namespace=unluckybird" -e "Docker:Repository=unluckybird_private_repository" 
+Then to initaliaze the deployments and services run, changes in the template file might be necessary.
+    kubectl apply -f "{{Your path to this git repository}}\Bachelor Project\YAML Template\InitializeCluster.yaml" 
+
+## Project was created by Martin de Fries Justinussen

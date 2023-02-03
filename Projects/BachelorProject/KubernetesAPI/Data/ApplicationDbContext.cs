@@ -12,5 +12,7 @@ namespace KubernetesAPI.Data
 
         public DbSet<ConnectorType> ConnectorType { get; set; }
         public DbSet<Image> Image { get; set; }
+
+        public DbSet<ExposedPort> ExposedPort { get; set; }
     }
 }

@@ -12,10 +12,10 @@ namespace KubernetesAPI.Controllers
     [Route("[controller]")]
     public class PodController : Controller
     {
-        private readonly ILogger<ImageController> _logger;
+        private readonly ILogger<PodController> _logger;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public PodController(ILogger<ImageController> logger, IHttpClientFactory httpClientFactory)
+        public PodController(ILogger<PodController> logger, IHttpClientFactory httpClientFactory)
         {
             _logger = logger;
             _httpClientFactory = httpClientFactory;
@@ -27,7 +27,7 @@ namespace KubernetesAPI.Controllers
         {
             _logger.LogInformation("Getting pod logs");
 
-            HttpClient httpClient = _httpClientFactory.CreateClient("kubePodsClient");
+            HttpClient httpClient = _httpClientFactory.CreateClient("kubeCoreClient");
             if (System.IO.File.Exists("/var/run/secrets/kubernetes.io/serviceaccount/token"))
             {
                 string token = System.IO.File.ReadAllText("/var/run/secrets/kubernetes.io/serviceaccount/token");

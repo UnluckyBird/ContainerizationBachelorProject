@@ -26,7 +26,7 @@ namespace KubernetesAPI.Controllers
             List<ImageDTO> images = await _db.Image.Include(i => i.ConnectorType).Select(i => new ImageDTO()
             {
                 ConnectorType = i.ConnectorType.Type,
-                Tag= i.Tag,
+                Tag = i.Tag,
                 Digest = i.Digest,
                 LastPushed = i.LastPushed
             }).ToListAsync();

@@ -1,0 +1,16 @@
+//So kubernetes can access your private repositories
+kubectl create secret docker-registry regcred --docker-server=https://index.docker.io/v1/ --docker-username={{docker username}} --docker-password={{docker password}} --docker-email={{docker email}}
+
+//Give entire cluster admin access
+kubectl create clusterrolebinding serviceaccounts-cluster-admin --clusterrole=cluster-admin --group=system:serviceaccounts
+
+//Start and forward Kubernetes API to localhost:8080 for testing purposes
+minikube start --driver=docker
+kubectl proxy --port=8080
+//additional Kubernetes commands
+kubectl create deployment {{name}} --image={{image}}
+kubectl get pod
+
+//To build and run docker images
+docker build --rm -t unluckybird/bachelor-project:kube-api-latest .
+docker run --rm -p 5000:5000 -p 5001:5001 -e ASPNETCORE_HTTP_PORT=https://+:5001 -e ASPNETCORE_URLS=http://+:5000

@@ -15,7 +15,7 @@ namespace KubernetesAPI.Models.DBModels
 
         public int? MaxReplicas { get; set; }
 
-        public int? ExposedPort { get; set; }
+        public IList<ExposedPort> ExposedPorts { get; set; } = new List<ExposedPort>();
 
         public IList<Image> Images { get; set; } = new List<Image>();
     }

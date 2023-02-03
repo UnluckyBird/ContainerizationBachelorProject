@@ -13,7 +13,7 @@ metadata:
     name: kube-api-secret
 type: Opaque
 stringData:
-    docker-password: {{docker password}}
+    docker-password: qwerqlv3y6JF9
 ---
 apiVersion: v1
 kind: Secret
@@ -23,24 +23,44 @@ type: Opaque
 stringData:
     mssql-sa-password: qwer1234
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kube-api-account
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kube-api-cluster-admin-binding
+subjects:
+- kind: ServiceAccount
+  name: kube-api-account
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kube-api-deployment
   labels:
-    app: kube-api
+    app: kube-api-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: kube-api
+      app: kube-api-deployment
   template:
     metadata:
       labels:
-        app: kube-api
+        app: kube-api-deployment
     spec:
+      serviceAccountName: kube-api-account
       containers:
-      - name: kube-api
+      - name: kube-api-deployment
         image: unluckybird/bachelor-project:kube-api-latest
         imagePullPolicy: Always
         ports:
@@ -83,7 +103,7 @@ metadata:
 spec:
   type: LoadBalancer 
   selector:
-    app: kube-api
+    app: kube-api-deployment
   ports:
     - protocol: TCP
       port: 8081
@@ -132,7 +152,6 @@ kind: Service
 metadata:
   name: mssql-service
 spec:
-  type: LoadBalancer 
   selector:
     app: mssql
   ports:

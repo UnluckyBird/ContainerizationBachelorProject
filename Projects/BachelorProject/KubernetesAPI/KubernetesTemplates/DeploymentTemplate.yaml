@@ -17,6 +17,7 @@ spec:
       containers:
       - name: {{app}}
         image: {{image}}
+        imagePullPolicy: Always
         ports:
         - containerPort: {{port}}
       imagePullSecrets:

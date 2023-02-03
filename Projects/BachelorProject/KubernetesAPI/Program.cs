@@ -71,7 +71,7 @@ if (host != null && port != null)
         return handler;
     });
 
-    builder.Services.AddHttpClient("kubePodsClient", options =>
+    builder.Services.AddHttpClient("kubeCoreClient", options =>
     {
         if (port == "443")
         {
@@ -95,12 +95,11 @@ else
         options.BaseAddress = new Uri(builder.Configuration["Kubernetes:APIURL"] ?? throw new ArgumentNullException("Kubernetes:APIURL"));
     });
 
-    builder.Services.AddHttpClient("kubePodsClient", options =>
+    builder.Services.AddHttpClient("kubeCoreClient", options =>
     {
-        options.BaseAddress = new Uri(builder.Configuration["Kubernetes:PodsAPIURL"] ?? throw new ArgumentNullException("Kubernetes:APIURL"));
+        options.BaseAddress = new Uri(builder.Configuration["Kubernetes:CoreAPIURL"] ?? throw new ArgumentNullException("Kubernetes:APIURL"));
     });
 }
-
 
 builder.Services.AddHostedService<UpdateImages>();
 builder.Services.Configure<KubernetesOptions>(builder.Configuration.GetSection("Kubernetes"));

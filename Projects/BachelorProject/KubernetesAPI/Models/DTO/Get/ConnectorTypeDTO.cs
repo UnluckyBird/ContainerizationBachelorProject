@@ -8,6 +8,8 @@
 
         public int? MaxReplicas { get; set; }
 
+        public IList<int> ExposedPorts { get; set; }
+
         public IList<string> Images { get; set; }
     }
 }

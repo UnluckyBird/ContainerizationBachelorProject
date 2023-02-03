@@ -12,4 +12,6 @@ COPY --from=build /app ./
 
 EXPOSE 8081
 
+ENV ASPNETCORE_URLS=http://+:8081
+
 ENTRYPOINT ["dotnet", "KubernetesAPI.dll"]
