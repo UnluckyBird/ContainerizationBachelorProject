@@ -18,7 +18,7 @@ class ConnectorTypeGet {
     repository: json['repository'] ?? '',
     maxReplicas: json['maxReplicas'] ?? 0,
     exposedPorts: List<int>.from(json['exposedPorts'].map((x) => x)),
-    images: List<String>.from(json['images'].map((x) => x.toString()))
+    images: List<String>.from(json['images'].map((x) => x))
   );
 
   clear() {

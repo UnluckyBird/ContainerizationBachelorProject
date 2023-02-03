@@ -1225,7 +1225,7 @@ class _ConnectorTypePageState extends State<ConnectorTypePage> {
                   Text('Available Images:', 
                     style: Theme.of(context).textTheme.headline6
                   ),
-                  Text(widget.connectorType.exposedPorts.isNotEmpty ? widget.connectorType.images.join(', ') : 'No Images',
+                  Text(widget.connectorType.images.isNotEmpty ? widget.connectorType.images.join(', ') : 'No Images',
                     style: Theme.of(context).textTheme.labelLarge
                   ),
                   const SizedBox(
