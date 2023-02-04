@@ -109,6 +109,15 @@ builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
+using (var serviceScope = app.Services.GetService<IServiceScopeFactory>()?.CreateScope())
+{
+    var context = serviceScope?.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    if(context != null)
+    {
+        await context.Database.MigrateAsync();
+    }      
+}
+
 app.MapHealthChecks("/health");
 
 app.UseSwagger();
