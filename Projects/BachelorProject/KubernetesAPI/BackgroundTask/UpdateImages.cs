@@ -64,7 +64,8 @@ namespace KubernetesAPI.BackgroundTask
                                 { 
                                     Type = imageType,
                                     Repository = $"{result.NameSpace}/{result.Repository}",
-                                    Images = new List<Image>()
+                                    Images = new List<Image>(),
+                                    ExposedPorts= new List<ExposedPort>() { new ExposedPort { Port = 0 } }
                                 };
                                 connectorTypes.Add(connectorType);
                             }

@@ -87,6 +87,7 @@ class MainViewState extends State<MainView> {
               unselectedItemColor: Colors.grey,
               selectedItemColor: Colors.blue,
               currentIndex: _selectedIndex,
+              type: BottomNavigationBarType.fixed,
               onTap: (int index) {
                 setState(() {
                   _selectedIndex = index;
@@ -103,7 +104,7 @@ class MainViewState extends State<MainView> {
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.device_hub_rounded),
-                  label: 'Connector Types'
+                  label: 'Types'
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.settings_rounded), 
@@ -182,11 +183,11 @@ class _HomePageState extends State<HomePage> {
   List<ConnectorTypeGet> _connectorTypes = [];
   List<ConnectorGet> _connectors = [];
   ScaffoldMessengerState? messenger;
-  bool _supressNotification = false;
+  bool _suppressNotification = false;
 
   _showSnackBar(String text) {
     Messages.messages.add(text);
-    if(_supressNotification == false){
+    if(_suppressNotification == false){
       messenger?.showSnackBar(
         SnackBar(
           backgroundColor: const Color.fromARGB(255, 4, 33, 66),
@@ -203,7 +204,7 @@ class _HomePageState extends State<HomePage> {
     debugPrint('Getting Connectors from API');
     try{
       final url = await SharedPreferencesHelper.getAPIURL();
-      _supressNotification = await SharedPreferencesHelper.getSupressNotification();
+      _suppressNotification = await SharedPreferencesHelper.getSuppressNotification();
       if(url.isEmpty == false){
         final uri = Uri.parse('$url/Connector');
         final response = await http.get(uri);
@@ -360,11 +361,11 @@ class ConnectorsPageState extends State<ConnectorsPage> {
     return conn;
   }));
   ScaffoldMessengerState? messenger;
-  bool _supressNotification = false;
+  bool _suppressNotification = false;
 
   _showSnackBar(String text) {
     Messages.messages.add(text);
-    if(_supressNotification == false){
+    if(_suppressNotification == false){
       messenger?.showSnackBar(
         SnackBar(
           backgroundColor: const Color.fromARGB(255, 4, 33, 66),
@@ -381,7 +382,7 @@ class ConnectorsPageState extends State<ConnectorsPage> {
     debugPrint('Getting Connectors from API');
     try{
       final url = await SharedPreferencesHelper.getAPIURL();
-      _supressNotification = await SharedPreferencesHelper.getSupressNotification();
+      _suppressNotification = await SharedPreferencesHelper.getSuppressNotification();
       if(url.isEmpty == false){
         final uri = Uri.parse('$url/Connector');
         final response = await http.get(uri);
@@ -564,7 +565,7 @@ class ConnectorPage extends StatefulWidget {
 
 class _ConnectorPageState extends State<ConnectorPage> {
   ScaffoldMessengerState? messenger;
-  bool _supressNotification = false;
+  bool _suppressNotification = false;
 
   List<DataRow> _createRows() {
     return widget.connector.envVars
@@ -576,7 +577,7 @@ class _ConnectorPageState extends State<ConnectorPage> {
 
   _showSnackBar(String text) {
     Messages.messages.add(text);
-    if(_supressNotification == false){
+    if(_suppressNotification == false){
       messenger?.showSnackBar(
         SnackBar(
           backgroundColor: const Color.fromARGB(255, 4, 33, 66),
@@ -593,7 +594,7 @@ class _ConnectorPageState extends State<ConnectorPage> {
     debugPrint('Sending updated Connector to API');
     try{
       final url = await SharedPreferencesHelper.getAPIURL();
-      _supressNotification = await SharedPreferencesHelper.getSupressNotification();
+      _suppressNotification = await SharedPreferencesHelper.getSuppressNotification();
       if(url.isEmpty == false){
         final uri = Uri.parse('$url/Connector?deploymentName=${widget.connector.deploymentName}');
         final response = await http.delete(uri);
@@ -798,11 +799,11 @@ class PodPage extends StatefulWidget {
 class _PodPageState extends State<PodPage> {
   List<PodGet> _pods = List.generate(4, ((index) => PodGet(name: 'pod $index')));
   ScaffoldMessengerState? messenger;
-  bool _supressNotification = false;
+  bool _suppressNotification = false;
 
   _showSnackBar(String text) {
     Messages.messages.add(text);
-    if(_supressNotification == false){
+    if(_suppressNotification == false){
       messenger?.showSnackBar(
         SnackBar(
           backgroundColor: const Color.fromARGB(255, 4, 33, 66),
@@ -819,7 +820,7 @@ class _PodPageState extends State<PodPage> {
     debugPrint('Getting pods from API');
     try{
       final url = await SharedPreferencesHelper.getAPIURL();
-      _supressNotification = await SharedPreferencesHelper.getSupressNotification();
+      _suppressNotification = await SharedPreferencesHelper.getSuppressNotification();
       if(url.isEmpty == false){
         final uri = Uri.parse('$url/Connector/${widget.connectorName}/Pods');
         final response = await http.get(uri);
@@ -926,11 +927,11 @@ class LogPage extends StatefulWidget {
 class _LogPageState extends State<LogPage> {
   String log = 'Loading...';
   ScaffoldMessengerState? messenger;
-  bool _supressNotification = false;
+  bool _suppressNotification = false;
 
   _showSnackBar(String text) {
     Messages.messages.add(text);
-    if(_supressNotification == false){
+    if(_suppressNotification == false){
       messenger?.showSnackBar(
         SnackBar(
           backgroundColor: const Color.fromARGB(255, 4, 33, 66),
@@ -947,7 +948,7 @@ class _LogPageState extends State<LogPage> {
     debugPrint('Getting log from API');
     try{
       final url = await SharedPreferencesHelper.getAPIURL();
-      _supressNotification = await SharedPreferencesHelper.getSupressNotification();
+      _suppressNotification = await SharedPreferencesHelper.getSuppressNotification();
       if(url.isEmpty == false){
         final uri = Uri.parse('$url/Pod/${widget.podName}/Logs');
         final response = await http.get(uri);
@@ -1038,11 +1039,11 @@ class ConnectorTypesPageState extends State<ConnectorTypesPage> {
     return conn;
   }));
   ScaffoldMessengerState? messenger;
-  bool _supressNotification = false;
+  bool _suppressNotification = false;
 
   _showSnackBar(String text) {
     Messages.messages.add(text);
-    if(_supressNotification == false){
+    if(_suppressNotification == false){
       messenger?.showSnackBar(
         SnackBar(
           backgroundColor: const Color.fromARGB(255, 4, 33, 66),
@@ -1059,7 +1060,7 @@ class ConnectorTypesPageState extends State<ConnectorTypesPage> {
     debugPrint('Getting ConnectorTypes from API');
     try{
       final url = await SharedPreferencesHelper.getAPIURL();
-      _supressNotification = await SharedPreferencesHelper.getSupressNotification();
+      _suppressNotification = await SharedPreferencesHelper.getSuppressNotification();
       if(url.isEmpty == false){
         final uri = Uri.parse('$url/Connector/Types');
         final response = await http.get(uri);
@@ -1318,12 +1319,12 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   final _textController = TextEditingController();
-  bool _supressNotification = false;
+  bool _suppressNotification = false;
 
   Future<void> getSettings() async {
     debugPrint('agsikgsmg');
     _textController.text = await SharedPreferencesHelper.getAPIURL();
-    _supressNotification = await SharedPreferencesHelper.getSupressNotification();
+    _suppressNotification = await SharedPreferencesHelper.getSuppressNotification();
   }
 
   @override
@@ -1388,13 +1389,13 @@ class _SettingsPageState extends State<SettingsPage> {
                   SizedBox(
                     width: 400.0,
                     child: SwitchListTile(
-                      title: Text('Supress Notifications',style: Theme.of(context).textTheme.labelLarge,),
-                      value: _supressNotification,
+                      title: Text('Suppress Notifications',style: Theme.of(context).textTheme.labelLarge,),
+                      value: _suppressNotification,
                       activeColor: Colors.blue,
                       onChanged: (bool val) {
-                        SharedPreferencesHelper.setSupressNotification(val);
+                        SharedPreferencesHelper.setSuppressNotification(val);
                         setState(() {
-                          _supressNotification = val;
+                          _suppressNotification = val;
                         });
                       }
                     ),
@@ -1428,11 +1429,11 @@ class _PostConnectorDialogPageState extends State<PostConnectorDialogPage> {
   final _formKey = GlobalKey<FormState>();
   final _connectorPost = ConnectorPost();
   ScaffoldMessengerState? messenger;
-  bool _supressNotification = false;
+  bool _suppressNotification = false;
 
   _showSnackBar(String text) {
     Messages.messages.add(text);
-    if(_supressNotification == false){
+    if(_suppressNotification == false){
       messenger?.showSnackBar(
         SnackBar(
           backgroundColor: const Color.fromARGB(255, 4, 33, 66),
@@ -1449,7 +1450,7 @@ class _PostConnectorDialogPageState extends State<PostConnectorDialogPage> {
     debugPrint('Sending new Connector to API');
     try{
       final url = await SharedPreferencesHelper.getAPIURL();
-      _supressNotification = await SharedPreferencesHelper.getSupressNotification();
+      _suppressNotification = await SharedPreferencesHelper.getSuppressNotification();
       _showSnackBar('Submitting form to API');
       if(url.isEmpty == false){
         final uri = Uri.parse('$url/Connector');
@@ -1634,11 +1635,11 @@ class _PatchConnectorDialogPageState extends State<PatchConnectorDialogPage> {
   final _formKey = GlobalKey<FormState>();
   final _connectorPatch = ConnectorPatch();
   ScaffoldMessengerState? messenger;
-  bool _supressNotification = false;
+  bool _suppressNotification = false;
 
   _showSnackBar(String text) {
     Messages.messages.add(text);
-    if(_supressNotification == false){
+    if(_suppressNotification == false){
       messenger?.showSnackBar(
         SnackBar(
           backgroundColor: const Color.fromARGB(255, 4, 33, 66),
@@ -1655,7 +1656,7 @@ class _PatchConnectorDialogPageState extends State<PatchConnectorDialogPage> {
     debugPrint('Sending updated Connector to API');
     try{
       final url = await SharedPreferencesHelper.getAPIURL();
-      _supressNotification = await SharedPreferencesHelper.getSupressNotification();
+      _suppressNotification = await SharedPreferencesHelper.getSuppressNotification();
       _showSnackBar('Submitting form to API');
       if(url.isEmpty == false){
         final uri = Uri.parse('$url/Connector?deploymentName=${widget.connector.deploymentName}');
@@ -1801,11 +1802,11 @@ class _PutConnectorTypeDialogPageState extends State<PutConnectorTypeDialogPage>
   final _formKey = GlobalKey<FormState>();
   final _connectorTypePut = ConnectorTypePut();
   ScaffoldMessengerState? messenger;
-  bool _supressNotification = false;
+  bool _suppressNotification = false;
 
   _showSnackBar(String text) {
     Messages.messages.add(text);
-    if(_supressNotification == false){
+    if(_suppressNotification == false){
       messenger?.showSnackBar(
         SnackBar(
           backgroundColor: const Color.fromARGB(255, 4, 33, 66),     
@@ -1822,7 +1823,7 @@ class _PutConnectorTypeDialogPageState extends State<PutConnectorTypeDialogPage>
     debugPrint('Sending updated Connector Type to API');
     try{
       final url = await SharedPreferencesHelper.getAPIURL();
-      _supressNotification = await SharedPreferencesHelper.getSupressNotification();
+      _suppressNotification = await SharedPreferencesHelper.getSuppressNotification();
       _showSnackBar('Submitting form to API');
       if(url.isEmpty == false){
         final uri = Uri.parse('$url/Connector/Types?type=${_connectorTypePut.type}');

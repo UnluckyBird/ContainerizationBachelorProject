@@ -2,7 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class SharedPreferencesHelper {
   static const String _apiUrl = "language";
-  static const String _supressNotification = "supressNotification";
+  static const String _suppressNotification = "suppressNotification";
 
   static Future<String> getAPIURL() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -16,15 +16,15 @@ class SharedPreferencesHelper {
     return prefs.setString(_apiUrl, value);
   }
 
-  static Future<bool> getSupressNotification() async {
+  static Future<bool> getSuppressNotification() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    return prefs.getBool(_supressNotification) ?? false;
+    return prefs.getBool(_suppressNotification) ?? false;
   }
 
-  static Future<bool> setSupressNotification(bool value) async {
+  static Future<bool> setSuppressNotification(bool value) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    return prefs.setBool(_supressNotification, value);
+    return prefs.setBool(_suppressNotification, value);
   }
 }
