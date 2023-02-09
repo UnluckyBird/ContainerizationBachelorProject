@@ -84,6 +84,7 @@ class MainViewState extends State<MainView> {
       bottomNavigationBar: MediaQuery.of(context).size.width < 500
           ? BottomNavigationBar(
               showUnselectedLabels: true,
+              unselectedItemColor: Colors.grey,
               selectedItemColor: Colors.blue,
               currentIndex: _selectedIndex,
               onTap: (int index) {
@@ -180,24 +181,29 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<ConnectorTypeGet> _connectorTypes = [];
   List<ConnectorGet> _connectors = [];
+  ScaffoldMessengerState? messenger;
+  bool _supressNotification = false;
 
   _showSnackBar(String text) {
     Messages.messages.add(text);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: const Color.fromARGB(255, 4, 33, 66),
-        content: Text(
-          text,
-          style: const TextStyle(color: Colors.white),
+    if(_supressNotification == false){
+      messenger?.showSnackBar(
+        SnackBar(
+          backgroundColor: const Color.fromARGB(255, 4, 33, 66),
+          content: Text(
+            text,
+            style: const TextStyle(color: Colors.white),
+          )
         ),
-      ),
-    );
+      );
+    }
   }
 
   Future<void> getData() async {
     debugPrint('Getting Connectors from API');
     try{
       final url = await SharedPreferencesHelper.getAPIURL();
+      _supressNotification = await SharedPreferencesHelper.getSupressNotification();
       if(url.isEmpty == false){
         final uri = Uri.parse('$url/Connector');
         final response = await http.get(uri);
@@ -218,23 +224,23 @@ class _HomePageState extends State<HomePage> {
           _connectors = transformed.toList();
         }
         else{
-          if (mounted) {
-            _showSnackBar('Failed to retrieve data: ${response.reasonPhrase}');
-          }
+          _showSnackBar('Failed to retrieve data: ${response.reasonPhrase}');
         }
       }
       else{
-        if (mounted) {
         _showSnackBar('No API URL found in settings');
-        }
       }
     }
     catch(ex)
     {
-      if (mounted) {
-        _showSnackBar('Problem getting data from API');
-      }
+      _showSnackBar('Problem getting data from API');
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    messenger = ScaffoldMessenger.of(context);
   }
 
   @override
@@ -295,25 +301,24 @@ class _HomePageState extends State<HomePage> {
                     ),
                     const Divider(),
                     Expanded(
-                      child: SingleChildScrollView(
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text('Messages:',
-                                style: Theme.of(context).textTheme.headline6,
-                              ),
-                              const SizedBox(height: 10),
-                              ListView.builder(
-                                shrinkWrap: true,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text('Messages:',
+                              style: Theme.of(context).textTheme.headline6,
+                            ),
+                            const SizedBox(height: 10),
+                            Expanded(
+                              child: ListView.builder(
                                 itemCount: MainView.of(context).messages.length,
                                 itemBuilder: (context, index) {
                                   return Text(MainView.of(context).messages[index]);
                                 },
-                              )
-                            ],
-                          ),
+                              ),
+                            )
+                          ],
                         ),
                       ),
                     ),
@@ -354,24 +359,29 @@ class ConnectorsPageState extends State<ConnectorsPage> {
     );
     return conn;
   }));
+  ScaffoldMessengerState? messenger;
+  bool _supressNotification = false;
 
   _showSnackBar(String text) {
     Messages.messages.add(text);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: const Color.fromARGB(255, 4, 33, 66),
-        content: Text(
-          text,
-          style: const TextStyle(color: Colors.white),
+    if(_supressNotification == false){
+      messenger?.showSnackBar(
+        SnackBar(
+          backgroundColor: const Color.fromARGB(255, 4, 33, 66),
+          content: Text(
+            text,
+            style: const TextStyle(color: Colors.white),
+          )
         ),
-      ),
-    );
+      );
+    }
   }
 
   Future<void> getConnectors() async {
     debugPrint('Getting Connectors from API');
     try{
       final url = await SharedPreferencesHelper.getAPIURL();
+      _supressNotification = await SharedPreferencesHelper.getSupressNotification();
       if(url.isEmpty == false){
         final uri = Uri.parse('$url/Connector');
         final response = await http.get(uri);
@@ -382,23 +392,23 @@ class ConnectorsPageState extends State<ConnectorsPage> {
           _connectors = transformed.toList();
         }
         else{
-          if (mounted) {
-            _showSnackBar('Failed to retrieve connectors: ${response.reasonPhrase}');
-          }
+          _showSnackBar('Failed to retrieve connectors: ${response.reasonPhrase}');
         }
       }
       else{
-        if (mounted) {
-          _showSnackBar('No API URL found in settings');
-        }
+        _showSnackBar('No API URL found in settings');
       }
     }
     catch(ex)
     {
-      if (mounted) {
-        _showSnackBar('Problem getting connectors from API');
-      }
+      _showSnackBar('Problem getting connectors from API');
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    messenger = ScaffoldMessenger.of(context);
   }
 
   @override
@@ -553,6 +563,8 @@ class ConnectorPage extends StatefulWidget {
 }
 
 class _ConnectorPageState extends State<ConnectorPage> {
+  ScaffoldMessengerState? messenger;
+  bool _supressNotification = false;
 
   List<DataRow> _createRows() {
     return widget.connector.envVars
@@ -562,23 +574,26 @@ class _ConnectorPageState extends State<ConnectorPage> {
             ])).toList();
   }
 
-    _showSnackBar(String text) {
+  _showSnackBar(String text) {
     Messages.messages.add(text);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: const Color.fromARGB(255, 4, 33, 66),
-        content: Text(
-          text,
-          style: const TextStyle(color: Colors.white),
+    if(_supressNotification == false){
+      messenger?.showSnackBar(
+        SnackBar(
+          backgroundColor: const Color.fromARGB(255, 4, 33, 66),
+          content: Text(
+            text,
+            style: const TextStyle(color: Colors.white),
+          )
         ),
-      ),
-    );
+      );
+    }
   }
 
   Future<void> _deleteConnector() async {
     debugPrint('Sending updated Connector to API');
     try{
       final url = await SharedPreferencesHelper.getAPIURL();
+      _supressNotification = await SharedPreferencesHelper.getSupressNotification();
       if(url.isEmpty == false){
         final uri = Uri.parse('$url/Connector?deploymentName=${widget.connector.deploymentName}');
         final response = await http.delete(uri);
@@ -589,23 +604,23 @@ class _ConnectorPageState extends State<ConnectorPage> {
           }
         }
         else{
-          if (mounted) {
-            _showSnackBar('Failed to delete connector: ${response.reasonPhrase}');
-          }
+          _showSnackBar('Failed to delete connector: ${response.reasonPhrase}');
         }
       }
       else{
-        if (mounted) {
-          _showSnackBar('No API URL found in settings');
-        }
+        _showSnackBar('No API URL found in settings');
       }
     }
     catch(ex)
     {
-      if (mounted) {
-        _showSnackBar('Error while deleting connector');
-      }
+      _showSnackBar('Error while deleting connector');
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    messenger = ScaffoldMessenger.of(context);
   }
 
   @override
@@ -782,24 +797,29 @@ class PodPage extends StatefulWidget {
 
 class _PodPageState extends State<PodPage> {
   List<PodGet> _pods = List.generate(4, ((index) => PodGet(name: 'pod $index')));
+  ScaffoldMessengerState? messenger;
+  bool _supressNotification = false;
 
   _showSnackBar(String text) {
     Messages.messages.add(text);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: const Color.fromARGB(255, 4, 33, 66),
-        content: Text(
-          text,
-          style: const TextStyle(color: Colors.white),
+    if(_supressNotification == false){
+      messenger?.showSnackBar(
+        SnackBar(
+          backgroundColor: const Color.fromARGB(255, 4, 33, 66),
+          content: Text(
+            text,
+            style: const TextStyle(color: Colors.white),
+          ) 
         ),
-      ),
-    );
+      );
+    }
   }
 
   Future<void> getPods() async {
     debugPrint('Getting pods from API');
     try{
       final url = await SharedPreferencesHelper.getAPIURL();
+      _supressNotification = await SharedPreferencesHelper.getSupressNotification();
       if(url.isEmpty == false){
         final uri = Uri.parse('$url/Connector/${widget.connectorName}/Pods');
         final response = await http.get(uri);
@@ -810,23 +830,23 @@ class _PodPageState extends State<PodPage> {
           _pods = transformed.toList();
         }
         else{
-          if (mounted) {
-            _showSnackBar('Failed to retrieve pods: ${response.reasonPhrase}');
-          }
+          _showSnackBar('Failed to retrieve pods: ${response.reasonPhrase}');
         }
       }
       else{
-        if (mounted) {
         _showSnackBar('No API URL found in settings');
-        }
       }
     }
     catch(ex)
     {
-      if (mounted) {
-        _showSnackBar('Problem getting pods from API');
-      }
+      _showSnackBar('Problem getting pods from API');
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    messenger = ScaffoldMessenger.of(context);
   }
 
   @override
@@ -905,24 +925,29 @@ class LogPage extends StatefulWidget {
 
 class _LogPageState extends State<LogPage> {
   String log = 'Loading...';
+  ScaffoldMessengerState? messenger;
+  bool _supressNotification = false;
 
   _showSnackBar(String text) {
     Messages.messages.add(text);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: const Color.fromARGB(255, 4, 33, 66),
-        content: Text(
-          text,
-          style: const TextStyle(color: Colors.white),
+    if(_supressNotification == false){
+      messenger?.showSnackBar(
+        SnackBar(
+          backgroundColor: const Color.fromARGB(255, 4, 33, 66),
+          content: Text(
+            text,
+            style: const TextStyle(color: Colors.white),
+          )
         ),
-      ),
-    );
+      );
+    }
   }
 
   Future<void> getLog() async {
     debugPrint('Getting log from API');
     try{
       final url = await SharedPreferencesHelper.getAPIURL();
+      _supressNotification = await SharedPreferencesHelper.getSupressNotification();
       if(url.isEmpty == false){
         final uri = Uri.parse('$url/Pod/${widget.podName}/Logs');
         final response = await http.get(uri);
@@ -931,24 +956,24 @@ class _LogPageState extends State<LogPage> {
           log = body;
         }
         else{
-          if (mounted) {
-            _showSnackBar('Failed to retrieve log: ${response.reasonPhrase}');
-          }
+          _showSnackBar('Failed to retrieve log: ${response.reasonPhrase}');
         }
       }
       else{
-        if (mounted) {
         _showSnackBar('No API URL found in settings');
-        }
       }
       
     }
     catch(ex)
     {
-      if(mounted){
-        _showSnackBar('Problem getting log from API');
-      }
+      _showSnackBar('Problem getting log from API');
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    messenger = ScaffoldMessenger.of(context);
   }
 
   @override
@@ -961,11 +986,21 @@ class _LogPageState extends State<LogPage> {
       body: FutureBuilder(
         builder: (ctx, snapshot) {
           if(snapshot.connectionState == ConnectionState.done){
-            return Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: SingleChildScrollView(
-                child: Expanded(child: Text(log)),
-              ),
+            return CustomScrollView(
+              slivers: [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(child: Text(log),),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             );
           }
           else
@@ -1002,24 +1037,29 @@ class ConnectorTypesPageState extends State<ConnectorTypesPage> {
     );
     return conn;
   }));
+  ScaffoldMessengerState? messenger;
+  bool _supressNotification = false;
 
   _showSnackBar(String text) {
     Messages.messages.add(text);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: const Color.fromARGB(255, 4, 33, 66),
-        content: Text(
-          text,
-          style: const TextStyle(color: Colors.white),
+    if(_supressNotification == false){
+      messenger?.showSnackBar(
+        SnackBar(
+          backgroundColor: const Color.fromARGB(255, 4, 33, 66),
+          content: Text(
+            text,
+            style: const TextStyle(color: Colors.white),
+          ) 
         ),
-      ),
-    );
+      );
+    }
   }
 
   Future<void> getConnectorTypes() async {
     debugPrint('Getting ConnectorTypes from API');
     try{
       final url = await SharedPreferencesHelper.getAPIURL();
+      _supressNotification = await SharedPreferencesHelper.getSupressNotification();
       if(url.isEmpty == false){
         final uri = Uri.parse('$url/Connector/Types');
         final response = await http.get(uri);
@@ -1030,23 +1070,23 @@ class ConnectorTypesPageState extends State<ConnectorTypesPage> {
           _connectorTypes = transformed.toList();
         }
         else{
-          if (mounted) {
-            _showSnackBar('Failed to retrieve connector types: ${response.reasonPhrase}');
-          }
+          _showSnackBar('Failed to retrieve connector types: ${response.reasonPhrase}');
         }
       }
       else{
-        if (mounted) {
         _showSnackBar('No API URL found in settings');
-        }
       }
     }
     catch(ex)
     {
-      if (mounted) {
-        _showSnackBar('Problem getting connectorTypes from API');
-      }
+      _showSnackBar('Problem getting connectorTypes from API');
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    messenger = ScaffoldMessenger.of(context);
   }
 
   @override
@@ -1278,9 +1318,12 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   final _textController = TextEditingController();
+  bool _supressNotification = false;
 
   Future<void> getSettings() async {
+    debugPrint('agsikgsmg');
     _textController.text = await SharedPreferencesHelper.getAPIURL();
+    _supressNotification = await SharedPreferencesHelper.getSupressNotification();
   }
 
   @override
@@ -1339,6 +1382,23 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                     ),
                   ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  SizedBox(
+                    width: 400.0,
+                    child: SwitchListTile(
+                      title: Text('Supress Notifications',style: Theme.of(context).textTheme.labelLarge,),
+                      value: _supressNotification,
+                      activeColor: Colors.blue,
+                      onChanged: (bool val) {
+                        SharedPreferencesHelper.setSupressNotification(val);
+                        setState(() {
+                          _supressNotification = val;
+                        });
+                      }
+                    ),
+                  ),
                 ],
               );
             }
@@ -1367,24 +1427,30 @@ class PostConnectorDialogPage extends StatefulWidget {
 class _PostConnectorDialogPageState extends State<PostConnectorDialogPage> {
   final _formKey = GlobalKey<FormState>();
   final _connectorPost = ConnectorPost();
+  ScaffoldMessengerState? messenger;
+  bool _supressNotification = false;
 
   _showSnackBar(String text) {
     Messages.messages.add(text);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: const Color.fromARGB(255, 4, 33, 66),
-        content: Text(
-          text,
-          style: const TextStyle(color: Colors.white),
+    if(_supressNotification == false){
+      messenger?.showSnackBar(
+        SnackBar(
+          backgroundColor: const Color.fromARGB(255, 4, 33, 66),
+          content: Text(
+            text,
+            style: const TextStyle(color: Colors.white),
+          )
         ),
-      ),
-    );
+      );
+    }
   }
 
   Future<void> _postConnector() async {
     debugPrint('Sending new Connector to API');
     try{
       final url = await SharedPreferencesHelper.getAPIURL();
+      _supressNotification = await SharedPreferencesHelper.getSupressNotification();
+      _showSnackBar('Submitting form to API');
       if(url.isEmpty == false){
         final uri = Uri.parse('$url/Connector');
         final response = await http.post(uri,
@@ -1392,28 +1458,26 @@ class _PostConnectorDialogPageState extends State<PostConnectorDialogPage> {
           body: jsonEncode(_connectorPost.toJson()),
         );
         if(response.statusCode >= 200 && response.statusCode < 300){
-          if (mounted) {
-            _showSnackBar('Connector succesfully created');
-          }
+          _showSnackBar('Connector succesfully created');
         }
         else{
-          if (mounted) {
-            _showSnackBar('Failed to create connector: ${response.reasonPhrase}');
-          }
+          _showSnackBar('Failed to create connector: ${response.reasonPhrase}');
         }
       }
       else{
-        if (mounted) {
-          _showSnackBar('No API URL found in settings');
-        }
+        _showSnackBar('No API URL found in settings');
       }
     }
     catch(ex)
     {
-      if (mounted) {
-        _showSnackBar('Error while creating connector');
-      }
+      _showSnackBar('Error while creating connector');
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    messenger = ScaffoldMessenger.of(context);
   }
 
   @override
@@ -1541,7 +1605,6 @@ class _PostConnectorDialogPageState extends State<PostConnectorDialogPage> {
                         if (_formKey.currentState?.validate() == true) {
                           _formKey.currentState?.save();
                           _postConnector();
-                          _showSnackBar('Submitting form to API');
                           Navigator.of(context).pop();
                         }
                       },
@@ -1570,26 +1633,30 @@ class PatchConnectorDialogPage extends StatefulWidget {
 class _PatchConnectorDialogPageState extends State<PatchConnectorDialogPage> {
   final _formKey = GlobalKey<FormState>();
   final _connectorPatch = ConnectorPatch();
+  ScaffoldMessengerState? messenger;
+  bool _supressNotification = false;
 
   _showSnackBar(String text) {
     Messages.messages.add(text);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: const Color.fromARGB(255, 4, 33, 66),
-        
-        content: Text(
-          text,
-          style: const TextStyle(color: Colors.white),
-        )
-        
-      ),
-    );
+    if(_supressNotification == false){
+      messenger?.showSnackBar(
+        SnackBar(
+          backgroundColor: const Color.fromARGB(255, 4, 33, 66),
+          content: Text(
+            text,
+            style: const TextStyle(color: Colors.white),
+          ) 
+        ),
+      );
+    }
   }
 
   Future<void> _patchConnector() async {
     debugPrint('Sending updated Connector to API');
     try{
       final url = await SharedPreferencesHelper.getAPIURL();
+      _supressNotification = await SharedPreferencesHelper.getSupressNotification();
+      _showSnackBar('Submitting form to API');
       if(url.isEmpty == false){
         final uri = Uri.parse('$url/Connector?deploymentName=${widget.connector.deploymentName}');
         final response = await http.patch(uri,
@@ -1597,28 +1664,26 @@ class _PatchConnectorDialogPageState extends State<PatchConnectorDialogPage> {
           body: jsonEncode(_connectorPatch.toJson()),
         );
         if(response.statusCode >= 200 && response.statusCode < 300){
-          if (mounted) {
-            _showSnackBar('Connector succesfully updated');
-          }
+          _showSnackBar('Connector succesfully updated');
         }
         else{
-          if (mounted) {
-            _showSnackBar('Failed to update connector: ${response.reasonPhrase}');
-          }
+          _showSnackBar('Failed to update connector: ${response.reasonPhrase}');
         }
       }
       else{
-        if (mounted) {
-          _showSnackBar('No API URL found in settings');
-        }
+        _showSnackBar('No API URL found in settings');
       }
     }
     catch(ex)
     {
-      if (mounted) {
-        _showSnackBar('Error while updating connector');
-      }
+      _showSnackBar('Error while updating connector');
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    messenger = ScaffoldMessenger.of(context);
   }
 
   @override
@@ -1707,7 +1772,6 @@ class _PatchConnectorDialogPageState extends State<PatchConnectorDialogPage> {
                         if (_formKey.currentState?.validate() == true) {
                           _formKey.currentState?.save();
                           _patchConnector();
-                          _showSnackBar('Submitting form to API');
                           Navigator.of(context).pop();
                         }
                       },
@@ -1736,26 +1800,30 @@ class PutConnectorTypeDialogPage extends StatefulWidget {
 class _PutConnectorTypeDialogPageState extends State<PutConnectorTypeDialogPage> {
   final _formKey = GlobalKey<FormState>();
   final _connectorTypePut = ConnectorTypePut();
+  ScaffoldMessengerState? messenger;
+  bool _supressNotification = false;
 
   _showSnackBar(String text) {
     Messages.messages.add(text);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: const Color.fromARGB(255, 4, 33, 66),
-        
-        content: Text(
-          text,
-          style: const TextStyle(color: Colors.white),
-        )
-        
-      ),
-    );
+    if(_supressNotification == false){
+      messenger?.showSnackBar(
+        SnackBar(
+          backgroundColor: const Color.fromARGB(255, 4, 33, 66),     
+          content: Text(
+            text,
+            style: const TextStyle(color: Colors.white),
+          )
+        ),
+      );
+    }
   }
 
   Future<void> putConnectorType() async {
     debugPrint('Sending updated Connector Type to API');
     try{
       final url = await SharedPreferencesHelper.getAPIURL();
+      _supressNotification = await SharedPreferencesHelper.getSupressNotification();
+      _showSnackBar('Submitting form to API');
       if(url.isEmpty == false){
         final uri = Uri.parse('$url/Connector/Types?type=${_connectorTypePut.type}');
         final response = await http.put(uri,
@@ -1763,28 +1831,26 @@ class _PutConnectorTypeDialogPageState extends State<PutConnectorTypeDialogPage>
           body: jsonEncode(_connectorTypePut.toJson()),
         );
         if(response.statusCode >= 200 && response.statusCode < 300){
-          if (mounted) {
-            _showSnackBar('Connector type succesfully updated');
-          }
+          _showSnackBar('Connector type succesfully updated');
         }
         else{
-          if (mounted) {
-            _showSnackBar('Connector type failed to update: ${response.reasonPhrase}');
-          }
+          _showSnackBar('Connector type failed to update: ${response.reasonPhrase}');
         }
       }
       else{
-        if (mounted) {
-          _showSnackBar('No API URL found in settings');
-        }
+        _showSnackBar('No API URL found in settings');
       }
     }
     catch(ex)
     {
-      if (mounted) {
-        _showSnackBar('Error while updating connector type');
-      }
+      _showSnackBar('Error while updating connector type');
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    messenger = ScaffoldMessenger.of(context);
   }
 
   @override
@@ -1854,13 +1920,13 @@ class _PutConnectorTypeDialogPageState extends State<PutConnectorTypeDialogPage>
                       icon: Icon(Icons.group_work_rounded),
                     ),
                     validator: (value) {
-                      if (value?.isEmpty == true) {
-                        return 'Please enter a max replica amount';
+                      if (value != null && value.isEmpty == false && int.tryParse(value) == null) {
+                        return 'Please enter a number or leave blank for no limit';
                       }
                       return null;
                     },
                     onSaved: (val) =>
-                      setState(() => _connectorTypePut.maxReplicas = val == null ? 1 : int.tryParse(val) ?? 1),
+                      setState(() => _connectorTypePut.maxReplicas = val == null ? null : int.tryParse(val)),
                   ),
                   const SizedBox(height: 15),
                   const Divider(),
@@ -1872,7 +1938,6 @@ class _PutConnectorTypeDialogPageState extends State<PutConnectorTypeDialogPage>
                         if (_formKey.currentState?.validate() == true) {
                           _formKey.currentState?.save();
                           putConnectorType();
-                          _showSnackBar('Submitting form to API');
                           Navigator.of(context).pop();
                         }
                       },

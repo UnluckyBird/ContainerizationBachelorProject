@@ -2,7 +2,7 @@ class ConnectorTypePut {
 
   String type = '';
   String repository = '';
-  int maxReplicas = 1; 
+  int? maxReplicas; 
   List<int> exposedPorts = List.empty(growable: true); 
 
   send() {
@@ -12,7 +12,7 @@ class ConnectorTypePut {
   clear() {
     type = '';
     repository = '';
-    maxReplicas = 1; 
+    maxReplicas = null; 
     exposedPorts = List.empty(growable: true); 
   }
 

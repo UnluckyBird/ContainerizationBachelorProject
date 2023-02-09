@@ -1,7 +1,7 @@
 class ConnectorTypeGet {
   String type = '';
   String repository = '';
-  int maxReplicas = 0; 
+  int? maxReplicas; 
   List<int> exposedPorts = List.empty(growable: true); 
   List<String> images = List.empty(growable: true);
 
@@ -16,7 +16,7 @@ class ConnectorTypeGet {
   factory ConnectorTypeGet.fromJson(Map<String, dynamic> json) => ConnectorTypeGet(
     type: json['type'] ?? '',
     repository: json['repository'] ?? '',
-    maxReplicas: json['maxReplicas'] ?? 0,
+    maxReplicas: json['maxReplicas'],
     exposedPorts: List<int>.from(json['exposedPorts'].map((x) => x)),
     images: List<String>.from(json['images'].map((x) => x))
   );
@@ -24,7 +24,7 @@ class ConnectorTypeGet {
   clear() {
     type = '';
     repository = '';
-    maxReplicas = 0; 
+    maxReplicas = null; 
     exposedPorts = List.empty(growable: true); 
     images = List.empty(growable: true);
   }
